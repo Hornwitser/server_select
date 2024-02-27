@@ -91,6 +91,17 @@ class ControllerPlugin extends BaseControllerPlugin {
 		}
 	}
 
+	async onInstanceConfigFieldChanged(instance, field, currentValue, previousValue) {
+		if (field === "instance.name") {
+			if (this.shouldShowInstance(instance)) {
+				let instanceData = await this.updateInstanceData(instance);
+				this.controller.sendTo("allInstances",
+					new UpdateInstancesEvent([instanceData], false),
+				);
+			}
+		}
+	}
+
 	async updateInstances() {
 		for (let [instanceId, instance] of this.controller.instances) {
 			if (this.shouldShowInstance(instance)) {
