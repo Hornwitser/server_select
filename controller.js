@@ -56,7 +56,18 @@ class ControllerPlugin extends BaseControllerPlugin {
 				return;
 			}
 
-			let currentData = await this.controller.sendTo({ instanceId }, new GetInstanceRequest());
+			// This request is almost obsolete, it could be removed once
+			// game version becomes known to the controller.
+			let instanceData = await this.controller.sendTo({ instanceId }, new GetInstanceRequest());
+
+			let currentData = {
+				id: instance.id,
+				name: instance.config.get("instance.name"),
+				status: instance.status,
+				game_port: instance.gamePort,
+				public_address: this.controller.hosts.get(instance.config.get("instance.assigned_host"))?.publicAddress,
+				game_version: instanceData.game_version,
+			};
 			this.instances.set(instanceId, currentData);
 		}
 
