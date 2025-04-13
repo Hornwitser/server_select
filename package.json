@@ -30,7 +30,7 @@
     "@clusterio/lib": "^2.0.0-alpha.16",
     "@clusterio/web_ui": "^2.0.0-alpha.16",
     "eslint": "^8.45.0",
-    "webpack": "^5.88.2",
+    "webpack": "^5.98.0",
     "webpack-cli": "^5.1.4",
     "webpack-merge": "^5.9.0"
   },
