@@ -1,25 +1,27 @@
+local compat = require("modules/clusterio/compat")
 local clusterio_api = require("modules/clusterio/api")
 local mod_gui = require("mod-gui")
 
+local space_age = compat.version_ge("2.0.0")
 
 local function on_server_startup()
-    if not global.server_select then
-        global.server_select = {}
+    if not compat.script_data.server_select then
+        compat.script_data.server_select = {}
     end
-    if not global.server_select.instances then
-        global.server_select.instances = {}
+    if not compat.script_data.server_select.instances then
+        compat.script_data.server_select.instances = {}
     end
-    if not global.server_select.guis then
-        global.server_select.guis = {}
+    if not compat.script_data.server_select.guis then
+        compat.script_data.server_select.guis = {}
     end
-    if not global.server_select.search_terms then
-        global.server_select.search_terms = {}
+    if not compat.script_data.server_select.search_terms then
+        compat.script_data.server_select.search_terms = {}
     end
 end
 
 local function get_this_instance()
     local instance_id = clusterio_api.get_instance_id()
-    return instance_id and global.server_select.instances[instance_id]
+    return instance_id and compat.script_data.server_select.instances[instance_id]
 end
 
 -- Perform fuzzy text comparison
@@ -46,9 +48,9 @@ local function server_select_gui(player)
             id = clusterio_api.get_instance_id(),
             name = clusterio_api.get_instance_name(),
             status = "running",
-            game_version = game.active_mods.base,
+            game_version = space_age and script.active_mods.base or game.active_mods.base,
         }
-        global.server_select.instances[this_instance.id] = this_instance
+        compat.script_data.server_select.instances[this_instance.id] = this_instance
     end
 
     local frame_flow = mod_gui.get_frame_flow(player)
@@ -59,11 +61,11 @@ local function server_select_gui(player)
         caption = 'Server Select',
         style = mod_gui.frame_style,
     }
-    global.server_select.guis[player.index] = gui
+    compat.script_data.server_select.guis[player.index] = gui
     player.opened = gui
 
     local instances = {}
-    for id, instance in pairs(global.server_select.instances) do
+    for _id, instance in pairs(compat.script_data.server_select.instances) do
         table.insert(instances, instance)
     end
 
@@ -92,7 +94,7 @@ local function server_select_gui(player)
     local search_field = search_flow.add {
         type = "textfield",
         name = "server_select-search",
-        text = global.server_select.search_terms[player.index] or "",
+        text = compat.script_data.server_select.search_terms[player.index] or "",
     }
 
     -- Render scroll-pane with instances
@@ -112,7 +114,7 @@ local function server_select_gui(player)
             type = "button",
             name = "server_select-instance-" .. instance.id,
             caption = instance.name,
-            visible = search_matches(instance.name, global.server_select.search_terms[player.index] or "")
+            visible = search_matches(instance.name, compat.script_data.server_select.search_terms[player.index] or "")
         }
 
         if instance.id == this_instance.id then
@@ -144,7 +146,7 @@ local function server_select_gui(player)
     end
 
     -- Move focus to search field if the user is searching for something
-    if global.server_select.search_terms[player.index] then
+    if compat.script_data.server_select.search_terms[player.index] then
         search_field.focus()
     end
 end
@@ -152,11 +154,10 @@ end
 local function on_gui_text_changed(event)
     if not (event.element and event.element.valid) then return end
     if event.element.name == "server_select-search" then
-        global.server_select.search_terms[event.player_index] = event.element.text
+        compat.script_data.server_select.search_terms[event.player_index] = event.element.text
         
         -- Filter search results
-        local player = game.get_player(event.player_index)
-        local gui = global.server_select.guis[event.player_index]
+        local gui = compat.script_data.server_select.guis[event.player_index]
         if gui then
             local scroll = gui["server_select-scroll"]
             if scroll then
@@ -173,9 +174,9 @@ end
 local function toggle_server_select_gui(player_index)
     local player = game.get_player(player_index)
 
-    if global.server_select.guis[player_index] then
-        global.server_select.guis[player_index].destroy()
-        global.server_select.guis[player_index] = nil
+    if compat.script_data.server_select.guis[player_index] then
+        compat.script_data.server_select.guis[player_index].destroy()
+        compat.script_data.server_select.guis[player_index] = nil
         player.opened = nil
 
     else
@@ -216,7 +217,7 @@ local function on_gui_click(event)
     local match = element_name:match("^server_select%-instance%-(%d+)$")
     if match then
         local instance_id = tonumber(match)
-        local instance = global.server_select.instances[instance_id]
+        local instance = compat.script_data.server_select.instances[instance_id]
 
         if instance and instance.game_port and instance.public_address then
             game.get_player(event.player_index).connect_to_server {
@@ -230,7 +231,6 @@ local function on_gui_click(event)
     end
 end
 
-
 local select = {}
 
 select.events = {
@@ -243,21 +243,21 @@ select.events = {
 server_select = {}
 function server_select.update_instances(data, full)
     if full then
-        global.server_select.instances = {}
+        compat.script_data.server_select.instances = {}
     end
-    local instances = game.json_to_table(data)
+    local instances = compat.json_to_table(data)
     for _, instance in ipairs(instances) do
         if instance.removed then
-            global.server_select.instances[instance.id] = nil
+            compat.script_data.server_select.instances[instance.id] = nil
         else
-            global.server_select.instances[instance.id] = instance
+            compat.script_data.server_select.instances[instance.id] = instance
         end
     end
 
     -- Update open server lists
-    for player_index, gui in pairs(global.server_select.guis) do
+    for player_index, gui in pairs(compat.script_data.server_select.guis) do
         gui.destroy()
-        global.server_select.guis[player_index] = nil
+        compat.script_data.server_select.guis[player_index] = nil
         server_select_gui(game.get_player(player_index))
     end
 end
