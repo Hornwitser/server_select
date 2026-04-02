@@ -47,11 +47,19 @@ class ControllerPlugin extends BaseControllerPlugin {
 	}
 
 	async updateInstanceData(instance) {
-		let instanceId = instance.config.get("instance.id");
-		if (instance.status === "running") {
-			let hostConnection = this.controller.wsServer.hostConnections.get(
-				instance.config.get("instance.assigned_host")
-			);
+		// Snapshot mutable fields before any await. In alpha.23 the InstanceRecord
+		// is mutated in-place by HostConnection when new status events arrive, so
+		// reading instance.status / instance.gamePort after an await may return a
+		// newer (stale-from-our-perspective) value and cause running instances to
+		// appear offline in the in-game server list.
+		const instanceId = instance.config.get("instance.id");
+		const status = instance.status;
+		const gamePort = instance.gamePort;
+		const name = instance.config.get("instance.name");
+		const assignedHost = instance.config.get("instance.assigned_host");
+
+		if (status === "running") {
+			let hostConnection = this.controller.wsServer.hostConnections.get(assignedHost);
 			if (!hostConnection) { // Should be impossible
 				return;
 			}
@@ -61,11 +69,11 @@ class ControllerPlugin extends BaseControllerPlugin {
 			let instanceData = await this.controller.sendTo({ instanceId }, new GetInstanceRequest());
 
 			let currentData = {
-				id: instance.id,
-				name: instance.config.get("instance.name"),
-				status: instance.status,
-				game_port: instance.gamePort,
-				public_address: this.controller.hosts.get(instance.config.get("instance.assigned_host"))?.publicAddress,
+				id: instanceId,
+				name,
+				status,
+				game_port: gamePort,
+				public_address: this.controller.hosts.get(assignedHost)?.publicAddress,
 				game_version: instanceData.game_version,
 			};
 			this.instances.set(instanceId, currentData);
@@ -75,11 +83,11 @@ class ControllerPlugin extends BaseControllerPlugin {
 		if (!instanceData) {
 			instanceData = {
 				"id": instanceId,
-				"name": instance.config.get("instance.name"),
+				"name": name,
 			};
 			this.instances.set(instanceId, instanceData);
 		}
-		instanceData["status"] = instance.status;
+		instanceData["status"] = status;
 		return instanceData;
 	}
 
