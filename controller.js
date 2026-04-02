@@ -11,7 +11,8 @@ class ControllerPlugin extends BaseControllerPlugin {
 	async init() {
 		this.instances = new Map();
 		if (this.controller.config.get("server_select.show_unknown_instances")) {
-			for (let [instanceId, instance] of this.controller.instances) {
+			for (let instance of this.controller.instances.values()) {
+				let instanceId = instance.id;
 				if (instance.status === "unknown") {
 					this.instances.set(instanceId, {
 						"id": instanceId,
@@ -114,7 +115,8 @@ class ControllerPlugin extends BaseControllerPlugin {
 	}
 
 	async updateInstances() {
-		for (let [instanceId, instance] of this.controller.instances) {
+		for (let instance of this.controller.instances.values()) {
+			let instanceId = instance.id;
 			if (this.shouldShowInstance(instance)) {
 				if (!this.instances.has(instanceId)) {
 					await this.updateInstanceData(instance);
