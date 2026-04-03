@@ -3,7 +3,6 @@ const lib = require("@clusterio/lib");
 const { BaseInstancePlugin } = require("@clusterio/host");
 
 const {
-	GetInstanceRequest,
 	GetInstancesRequest,
 	UpdateInstancesEvent,
 } = require("./info");
@@ -17,7 +16,6 @@ class InstancePlugin extends BaseInstancePlugin {
 
 		this.pendingCommands = [];
 		this.currentlySending = false;
-		this.instance.handle(GetInstanceRequest, this.handleGetInstanceRequest.bind(this));
 		this.instance.handle(UpdateInstancesEvent, this.handleUpdateInstancesEvent.bind(this));
 	}
 
@@ -43,17 +41,6 @@ class InstancePlugin extends BaseInstancePlugin {
 			this.sendPendingRcon();
 		}
 		return await promise;
-	}
-
-	async handleGetInstanceRequest() {
-		return {
-			id: this.instance.config.get("instance.id"),
-			name: this.instance.name,
-			status: this.instance.status,
-			game_port: this.instance.server.gamePort,
-			game_version: this.instance.server.version,
-			public_address: this.host.config.get("host.public_address"),
-		};
 	}
 
 	async updateList() {
