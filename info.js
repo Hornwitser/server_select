@@ -11,19 +11,6 @@ const instanceProperties = {
 	"public_address": { type: "string" },
 };
 
-class GetInstanceRequest {
-	static type = "request";
-	static src = "controller";
-	static dst = "instance";
-	static plugin = "server_select";
-	static Response = plainJson({
-		type: "object",
-		additionalProperties: false,
-		required: Object.keys(instanceProperties),
-		properties: instanceProperties,
-	});
-}
-
 class GetInstancesRequest {
 	static type = "request";
 	static src = "instance";
@@ -98,7 +85,6 @@ const plugin = {
 	},
 
 	messages: [
-		GetInstanceRequest,
 		GetInstancesRequest,
 		UpdateInstancesEvent,
 	],
@@ -106,7 +92,6 @@ const plugin = {
 
 module.exports = {
 	plugin,
-	GetInstanceRequest,
 	GetInstancesRequest,
 	UpdateInstancesEvent,
 }

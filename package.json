@@ -24,11 +24,11 @@
   },
   "homepage": "https://github.com/Hornwitser/server_select#readme",
   "peerDependencies": {
-    "@clusterio/lib": "^2.0.0-alpha.16"
+    "@clusterio/lib": "^2.0.0-alpha.19"
   },
   "devDependencies": {
-    "@clusterio/lib": "^2.0.0-alpha.16",
-    "@clusterio/web_ui": "^2.0.0-alpha.16",
+    "@clusterio/lib": "^2.0.0-alpha.19",
+    "@clusterio/web_ui": "^2.0.0-alpha.19",
     "eslint": "^8.45.0",
     "webpack": "^5.98.0",
     "webpack-cli": "^5.1.4",

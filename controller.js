@@ -2,7 +2,6 @@
 const { BaseControllerPlugin } = require("@clusterio/controller");
 
 const {
-	GetInstanceRequest,
 	GetInstancesRequest,
 	UpdateInstancesEvent,
 } = require("./info");
@@ -30,7 +29,7 @@ class ControllerPlugin extends BaseControllerPlugin {
 			field === "server_select.show_unknown_instances"
 			|| field === "server_select.show_offline_instances"
 		) {
-			await this.updateInstances()
+			this.updateInstances();
 		}
 	}
 
@@ -47,19 +46,15 @@ class ControllerPlugin extends BaseControllerPlugin {
 		return this.controller.config.get("server_select.show_offline_instances");
 	}
 
-	async updateInstanceData(instance) {
+	updateInstanceData(instance) {
 		let instanceId = instance.config.get("instance.id");
 		if (instance.status === "running") {
 			let hostConnection = this.controller.wsServer.hostConnections.get(
 				instance.config.get("instance.assigned_host")
 			);
 			if (!hostConnection) { // Should be impossible
-				return;
+				return undefined;
 			}
-
-			// This request is almost obsolete, it could be removed once
-			// game version becomes known to the controller.
-			let instanceData = await this.controller.sendTo({ instanceId }, new GetInstanceRequest());
 
 			let currentData = {
 				id: instance.id,
@@ -67,7 +62,7 @@ class ControllerPlugin extends BaseControllerPlugin {
 				status: instance.status,
 				game_port: instance.gamePort,
 				public_address: this.controller.hosts.get(instance.config.get("instance.assigned_host"))?.publicAddress,
-				game_version: instanceData.game_version,
+				game_version: instance.factorioVersion,
 			};
 			this.instances.set(instanceId, currentData);
 		}
@@ -84,13 +79,19 @@ class ControllerPlugin extends BaseControllerPlugin {
 		return instanceData;
 	}
 
+	sendInstanceUpdate(instance) {
+			let instanceData = this.updateInstanceData(instance);
+			if (instanceData) {
+				this.controller.sendTo("allInstances",
+					new UpdateInstancesEvent([instanceData], false),
+				);
+			}
+	}
+
 	async onInstanceStatusChanged(instance, prev) {
 		let instanceId = instance.config.get("instance.id");
 		if (this.shouldShowInstance(instance)) {
-			let instanceData = await this.updateInstanceData(instance);
-			this.controller.sendTo("allInstances",
-				new UpdateInstancesEvent([instanceData], false),
-			);
+			this.sendInstanceUpdate(instance);
 
 		} else {
 			this.instances.delete(instanceId);
@@ -106,20 +107,17 @@ class ControllerPlugin extends BaseControllerPlugin {
 	async onInstanceConfigFieldChanged(instance, field, currentValue, previousValue) {
 		if (field === "instance.name") {
 			if (this.shouldShowInstance(instance)) {
-				let instanceData = await this.updateInstanceData(instance);
-				this.controller.sendTo("allInstances",
-					new UpdateInstancesEvent([instanceData], false),
-				);
+				this.sendInstanceUpdate(instance);
 			}
 		}
 	}
 
-	async updateInstances() {
+	updateInstances() {
 		for (let instance of this.controller.instances.values()) {
 			let instanceId = instance.id;
 			if (this.shouldShowInstance(instance)) {
 				if (!this.instances.has(instanceId)) {
-					await this.updateInstanceData(instance);
+					this.updateInstanceData(instance);
 				}
 			} else {
 				this.instances.delete(instanceId);
