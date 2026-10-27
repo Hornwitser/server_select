@@ -67,8 +67,8 @@ const plugin = {
 	name: "server_select",
 	title: "Server Select",
 	description: "In-game GUI for connecting to other server in the cluster.",
-	controllerEntrypoint: "controller",
-	instanceEntrypoint: "instance",
+	controllerEntrypoint: "controller.js",
+	instanceEntrypoint: "instance.js",
 	controllerConfigFields: {
 		"server_select.show_offline_instances": {
 			title: "Show Offline Instances",
